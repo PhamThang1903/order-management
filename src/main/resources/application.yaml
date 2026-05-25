@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: order-management
+  profiles:
+    active: dev
+  datasource:
+    url: jdbc:postgresql://localhost:5432/order_db
+    username: postgres
+    password: secret
+  jpa:
+    hibernate:
+      ddl-auto: update
+      show-sql: true
+      open-in-view: false
+  kafka:
+    bootstrap-server: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: order-notification-group
+      auto-offset-reset: earliest
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring:
+          json:
+            trusted:
+              packages: com.example.ordermanagement.kafka, com.example.ordermanagement.event, com.example.ordermanagement.dto
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  cache:
+    type: redis
+    redis:
+      time-to-live: 600000
+
+
+app:
+  order:
+    topic: order-events
+    cache-ttl-seconds: 600
