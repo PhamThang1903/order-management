@@ -36,6 +36,8 @@ spring:
     redis:
       time-to-live: 600000
 
+  main:
+    allow-bean-definition-overriding: true
 
 app:
   order:
