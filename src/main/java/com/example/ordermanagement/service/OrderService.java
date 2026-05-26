@@ -40,6 +40,7 @@ public class OrderService {
                 .build();
         Order savedOrder = orderRepository.save(order);
         orderCacheService.cacheOrder(savedOrder);
+        orderCacheService.incrementTodayOrderCount();
         eventPublisher.publishEvent(new OrderCreatedEvent(this, savedOrder));
         return OrderResponse.from(savedOrder);
     }
