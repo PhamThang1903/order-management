@@ -30,6 +30,14 @@ public class OrderEventConsumer {
         }
     }
 
+    @KafkaListener(
+            topics = "${app.order.topic}.DLT",
+            groupId = "${spring.kafka.consumer.group-id}"
+    )
+    public void consumeDeadLetterTopic(Map<String, Object> event) {
+        log.error("Kafka DTL consumed failed event: {}", event);
+    }
+
     private void handleOrderCreated(Map<String, Object> event) {
         Object orderId = event.get("orderId");
         double score = System.currentTimeMillis();
