@@ -12,13 +12,13 @@ import java.util.List;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
-    List<Order> findByUserid(Long userId);
+    List<Order> findByUserId(Long userId);
 
     List<Order> findByStatus(OrderStatus status);
 
     @Query("select o from Order o where o.user.id = :userId and o.status = :status")
     List<Order> findByUserIdAndStatus(@Param("userId") Long userId, @Param("status") OrderStatus status);
 
-    @Query("select count(o) from Order o where o.createdAt >= :from")
+    @Query("select count(o) from Order o where o.createAt >= :from")
     long countOrdersSince(@Param("from")LocalDateTime from);
 }

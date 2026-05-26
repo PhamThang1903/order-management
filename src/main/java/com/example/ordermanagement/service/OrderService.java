@@ -11,10 +11,10 @@ import com.example.ordermanagement.event.OrderStatusChangedEvent;
 import com.example.ordermanagement.repository.OrderRepository;
 import com.example.ordermanagement.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
@@ -54,5 +54,17 @@ public class OrderService {
         orderCacheService.cacheOrder(savedOrder);
         eventPublisher.publishEvent(new OrderStatusChangedEvent(this, savedOrder, oldStatus, newStatus));
         return OrderResponse.from(savedOrder);
+    }
+
+    @Transactional(readOnly = true)
+    public OrderResponse getOrder(Long orderId) {
+        return orderCacheService.getFromCache(orderId)
+                .map(OrderResponse::from)
+                .orElseGet(() -> {
+                    Order order = orderRepository.findById(orderId)
+                            .orElseThrow(() -> new EntityNotFoundException("Order not found with id: " + orderId));
+                    orderCacheService.cacheOrder(order);
+                    return OrderResponse.from(order);
+                });
     }
 }
