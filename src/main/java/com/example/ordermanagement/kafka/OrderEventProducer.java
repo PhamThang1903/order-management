@@ -1,6 +1,7 @@
 package com.example.ordermanagement.kafka;
 
 import com.example.ordermanagement.domain.Order;
+import com.example.ordermanagement.domain.OrderStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,6 +41,32 @@ public class OrderEventProducer {
                                 result.getRecordMetadata().offset());
                     } else {
                         log.error("Kafka produce ORDER_CREATED failed: orderId={}",
+                                order.getId(), ex);
+                    }
+                });
+    }
+
+    public void publishStatusChanged(Order order, OrderStatus oldStatus, OrderStatus newStatus) {
+        String key = String.valueOf(order.getUser().getId());
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("eventType", "STATUS_CHANGED");
+        payload.put("orderId", order.getId());
+        payload.put("userId", order.getUser().getId());
+        payload.put("productName", order.getProductName());
+        payload.put("oldStatus", oldStatus);
+        payload.put("newStatus", newStatus);
+        payload.put("timestamp", LocalDateTime.now());
+
+        kafkaTemplate.send(orderTopic, key, payload)
+                .whenComplete((result, ex) -> {
+                    if (ex == null) {
+                        log.info("Kafka produced STATUS_CHANGED: topic={}, partition={}, offset={}",
+                                result.getRecordMetadata().topic(),
+                                result.getRecordMetadata().partition(),
+                                result.getRecordMetadata().offset());
+                    } else {
+                        log.error("Kafka produce STATUS_CHANGED failed: orderId={}",
                                 order.getId(), ex);
                     }
                 });
