@@ -2,6 +2,7 @@ package com.example.ordermanagement.kafka;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -11,6 +12,8 @@ import java.util.Map;
 @Component
 @RequiredArgsConstructor
 public class OrderEventConsumer {
+
+    private final RedisTemplate<String, Object> redisTemplate;
 
     @KafkaListener(
             topics = "${app.order.topic}",
@@ -28,13 +31,17 @@ public class OrderEventConsumer {
     }
 
     private void handleOrderCreated(Map<String, Object> event) {
-        log.info("Handle ORDER_CREATED event: orderId={}", event.get("orderId"));
+        Object orderId = event.get("orderId");
+        double score = System.currentTimeMillis();
+        redisTemplate.opsForZSet().add("recent:orders", orderId, score);
+        log.info("Saved ORDER_CREATED to Redis ZSet: key=recent:orders, orderId={}, score={}", orderId, score);
     }
 
     private void handleStatusChanged(Map<String, Object> event) {
-        log.info("Handle STATUS_CHANGED event: orderId={}, oldStatus={}, newStatus={}",
-                event.get("orderId"),
-                event.get("oldStatus"),
-                event.get("newStatus"));
+        String orderId = String.valueOf(event.get("orderId"));
+        Object newStatus = event.get("newStatus");
+
+        redisTemplate.opsForHash().put("order:status", orderId, newStatus);
+        log.info("Saved STATUS_CHANGED to Redis hash: key=order:status, orderId={}, newStatus={}", orderId, newStatus);
     }
 }
